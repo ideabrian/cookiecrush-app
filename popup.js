@@ -49,6 +49,14 @@ async function scanCookies() {
       index === self.findIndex((c) => c.name === cookie.name && c.domain === cookie.domain)
     );
 
+    // Log classification for debugging
+    console.log('📊 Cookie scan results:');
+    cookies.forEach(cookie => {
+      const purpose = getCookiePurpose(cookie);
+      const isProtected = purpose === 'authentication' || purpose === 'session';
+      console.log(`${isProtected ? '🔒' : '🍪'} ${cookie.name} (${cookie.domain}) - ${purpose}`);
+    });
+
     // Update UI
     updateCookieList();
     updateStats();
@@ -75,6 +83,15 @@ function getCookiePurpose(cookie) {
   const name = cookie.name.toLowerCase();
   const domain = cookie.domain.toLowerCase();
 
+  // Session - check first (most important for login)
+  if (name.match(/(session|sess|sid|ssid|hsid|apisid|sapisid|lsid)/)) return 'session';
+
+  // Authentication - check second
+  if (name.match(/(auth|token|login|csrf|secure.*psid)/)) return 'authentication';
+
+  // Google-specific auth cookies (belt and suspenders)
+  if (domain.includes('google') && name.match(/^(__secure-|__host-)/)) return 'authentication';
+
   // Analytics
   if (name.match(/^(_ga|_gid|__utm|_gat)/)) return 'analytics';
 
@@ -85,14 +102,8 @@ function getCookiePurpose(cookie) {
   // Identifier
   if (name.match(/(id|uuid|guid|uid|_hjid)/)) return 'identifier';
 
-  // Session
-  if (name.match(/(session|sess|sid)/)) return 'session';
-
-  // Authentication
-  if (name.match(/(auth|token|login|csrf)/)) return 'authentication';
-
   // Preferences
-  if (name.match(/(pref|settings|config|locale)/)) return 'preferences';
+  if (name.match(/(pref|settings|config|locale|consent)/)) return 'preferences';
 
   return 'unknown';
 }
@@ -131,7 +142,15 @@ function updateCookieList() {
 
 // Update stats
 function updateStats() {
-  document.getElementById('total-cookies').textContent = cookies.length;
+  const protectedCount = cookies.filter(cookie => {
+    const purpose = getCookiePurpose(cookie);
+    return purpose === 'authentication' || purpose === 'session';
+  }).length;
+
+  const crushableCount = cookies.length - protectedCount;
+
+  document.getElementById('total-cookies').textContent =
+    `${cookies.length} (${crushableCount} crushable, ${protectedCount} protected)`;
 }
 
 // Update kill counter
