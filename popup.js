@@ -168,11 +168,24 @@ window.crushCookie = async function(index) {
     // Add crushing animation
     cookieElement.classList.add('crushing');
 
+    // Construct proper URL (strip leading dot from domain)
+    const domain = cookie.domain.startsWith('.') ? cookie.domain.substring(1) : cookie.domain;
+    const url = `http${cookie.secure ? 's' : ''}://${domain}${cookie.path}`;
+
+    console.log('Crushing cookie:', cookie.name, 'from', url);
+
     // Remove cookie
-    await chrome.cookies.remove({
-      url: `http${cookie.secure ? 's' : ''}://${cookie.domain}${cookie.path}`,
+    const result = await chrome.cookies.remove({
+      url: url,
       name: cookie.name
     });
+
+    if (!result) {
+      console.error('Failed to remove cookie:', cookie.name, 'at', url);
+      throw new Error('Cookie removal failed');
+    }
+
+    console.log('✅ Crushed:', cookie.name);
 
     // Play crush sound (simple beep)
     playCrushSound();
@@ -236,11 +249,21 @@ async function crushAllCookies() {
 
     for (const cookie of [...cookiesToCrush]) {
       try {
-        await chrome.cookies.remove({
-          url: `http${cookie.secure ? 's' : ''}://${cookie.domain}${cookie.path}`,
+        // Construct proper URL (strip leading dot from domain)
+        const domain = cookie.domain.startsWith('.') ? cookie.domain.substring(1) : cookie.domain;
+        const url = `http${cookie.secure ? 's' : ''}://${domain}${cookie.path}`;
+
+        const result = await chrome.cookies.remove({
+          url: url,
           name: cookie.name
         });
-        crushedCount++;
+
+        if (result) {
+          crushedCount++;
+          console.log('✅ Crushed:', cookie.name);
+        } else {
+          console.error('Failed to remove cookie:', cookie.name, 'at', url);
+        }
       } catch (error) {
         console.error('Failed to crush cookie:', cookie.name, error);
       }
