@@ -110,15 +110,16 @@ function updateCookieList() {
   cookieList.innerHTML = cookies.map((cookie, index) => {
     const purpose = getCookiePurpose(cookie);
     const isThirdParty = cookie.domain.startsWith('.');
+    const isProtected = purpose === 'authentication' || purpose === 'session';
 
     return `
-      <div class="cookie-item" id="cookie-${index}">
+      <div class="cookie-item ${isProtected ? 'protected' : ''}" id="cookie-${index}">
         <div class="cookie-info">
           <div class="cookie-domain">${cookie.domain}</div>
           <div class="cookie-name">${cookie.name}</div>
-          <span class="cookie-purpose ${purpose}">${purpose}</span>
+          <span class="cookie-purpose ${purpose}">${purpose}${isProtected ? ' 🔒' : ''}</span>
         </div>
-        <button class="crush-btn" onclick="crushCookie(${index})">
+        <button class="crush-btn" onclick="crushCookie(${index})" ${isProtected ? 'title="Protected cookie - keeps you logged in"' : ''}>
           🔨 CRUSH
         </button>
       </div>
@@ -202,12 +203,38 @@ window.crushCookie = async function(index) {
 async function crushAllCookies() {
   try {
     const crushAllBtn = document.getElementById('crush-all-btn');
+
+    // Filter out authentication and session cookies
+    const cookiesToCrush = cookies.filter(cookie => {
+      const purpose = getCookiePurpose(cookie);
+      return purpose !== 'authentication' && purpose !== 'session';
+    });
+
+    const protectedCount = cookies.length - cookiesToCrush.length;
+
+    // Warn user about what will happen
+    if (protectedCount > 0) {
+      const confirmed = confirm(
+        `⚠️ CRUSH ${cookiesToCrush.length} TRACKERS?\n\n` +
+        `${protectedCount} authentication/session cookies will be preserved to keep you logged in.\n\n` +
+        `Click OK to crush only trackers and ads.`
+      );
+      if (!confirmed) return;
+    } else if (cookies.length > 0) {
+      const confirmed = confirm(
+        `💥 CRUSH ALL ${cookies.length} COOKIES?\n\n` +
+        `⚠️ WARNING: This will log you out of this site!\n\n` +
+        `Click OK to proceed.`
+      );
+      if (!confirmed) return;
+    }
+
     crushAllBtn.textContent = '💥 CRUSHING...';
     crushAllBtn.disabled = true;
 
     let crushedCount = 0;
 
-    for (const cookie of [...cookies]) {
+    for (const cookie of [...cookiesToCrush]) {
       try {
         await chrome.cookies.remove({
           url: `http${cookie.secure ? 's' : ''}://${cookie.domain}${cookie.path}`,
@@ -227,8 +254,12 @@ async function crushAllCookies() {
     // Play victory sound
     playVictorySound();
 
-    // Clear cookies and update UI
-    cookies = [];
+    // Remove crushed cookies from array, keep protected ones
+    cookies = cookies.filter(cookie => {
+      const purpose = getCookiePurpose(cookie);
+      return purpose === 'authentication' || purpose === 'session';
+    });
+
     updateCookieList();
     updateStats();
     updatePrivacyScore();
@@ -236,7 +267,7 @@ async function crushAllCookies() {
     crushAllBtn.textContent = `✨ Crushed ${crushedCount}!`;
     setTimeout(() => {
       crushAllBtn.textContent = '💥 CRUSH ALL';
-      crushAllBtn.disabled = true;
+      crushAllBtn.disabled = cookies.length === 0;
     }, 2000);
   } catch (error) {
     console.error('Crush all failed:', error);
