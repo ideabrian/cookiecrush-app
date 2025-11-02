@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>CookieCrush™</title>
+  <link rel="stylesheet" href="styles/popup.css">
+</head>
+<body>
+  <div class="container">
+    <!-- Header -->
+    <div class="header">
+      <h1>🍪 CookieCrush™</h1>
+      <p class="tagline">Turn privacy into a game</p>
+    </div>
+
+    <!-- Stats Grid -->
+    <div class="stats-grid">
+      <div class="stat-card">
+        <div class="stat-value" id="total-cookies">0</div>
+        <div class="stat-label">Trackers Found</div>
+      </div>
+      <div class="stat-card kill-counter">
+        <div class="stat-value" id="kill-count">🔨 0</div>
+        <div class="stat-label">Cookies Crushed</div>
+      </div>
+    </div>
+
+    <!-- Privacy Score -->
+    <div class="privacy-score">
+      <div class="score-label">Privacy Score</div>
+      <div class="score-bar">
+        <div class="score-fill" id="privacy-score-fill" style="width: 0%"></div>
+      </div>
+      <div class="score-value" id="privacy-score-value">0%</div>
+    </div>
+
+    <!-- Action Button -->
+    <button id="scan-btn" class="action-btn">
+      🔍 Scan This Site
+    </button>
+
+    <!-- Cookie List -->
+    <div class="cookie-list-section">
+      <h2>Trackers on this site</h2>
+      <div id="cookie-list" class="cookie-list">
+        <p class="empty-state">Click "Scan This Site" to see trackers</p>
+      </div>
+    </div>
+
+    <!-- Footer -->
+    <div class="footer">
+      <button id="crush-all-btn" class="crush-all-btn" disabled>
+        💥 CRUSH ALL
+      </button>
+      <button id="view-dashboard-btn" class="secondary-btn">
+        📊 View Full Dashboard
+      </button>
+    </div>
+  </div>
+
+  <script src="popup.js"></script>
+</body>
+</html>
