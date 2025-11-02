@@ -235,17 +235,32 @@ window.crushCookie = async function(index) {
 async function crushAllCookies() {
   try {
     const crushAllBtn = document.getElementById('crush-all-btn');
+    const includeAuthCookies = document.getElementById('include-auth-cookies').checked;
 
-    // Filter out authentication and session cookies
-    const cookiesToCrush = cookies.filter(cookie => {
-      const purpose = getCookiePurpose(cookie);
-      return purpose !== 'authentication' && purpose !== 'session';
-    });
+    // Filter cookies based on checkbox setting
+    let cookiesToCrush;
+    if (includeAuthCookies) {
+      // Nuclear option - crush EVERYTHING
+      cookiesToCrush = [...cookies];
+    } else {
+      // Smart protection - filter out authentication and session cookies
+      cookiesToCrush = cookies.filter(cookie => {
+        const purpose = getCookiePurpose(cookie);
+        return purpose !== 'authentication' && purpose !== 'session';
+      });
+    }
 
     const protectedCount = cookies.length - cookiesToCrush.length;
 
     // Warn user about what will happen
-    if (protectedCount > 0) {
+    if (includeAuthCookies && cookies.length > 0) {
+      const confirmed = confirm(
+        `🔥 CRUSH ALL ${cookies.length} COOKIES?\n\n` +
+        `⚠️ WARNING: This WILL log you out of this site!\n\n` +
+        `Click OK to proceed with nuclear option.`
+      );
+      if (!confirmed) return;
+    } else if (protectedCount > 0) {
       const confirmed = confirm(
         `⚠️ CRUSH ${cookiesToCrush.length} TRACKERS?\n\n` +
         `${protectedCount} authentication/session cookies will be preserved to keep you logged in.\n\n` +
@@ -296,11 +311,17 @@ async function crushAllCookies() {
     // Play victory sound
     playVictorySound();
 
-    // Remove crushed cookies from array, keep protected ones
-    cookies = cookies.filter(cookie => {
-      const purpose = getCookiePurpose(cookie);
-      return purpose === 'authentication' || purpose === 'session';
-    });
+    // Remove crushed cookies from array
+    if (includeAuthCookies) {
+      // Nuclear option - clear everything
+      cookies = [];
+    } else {
+      // Smart protection - keep only protected ones
+      cookies = cookies.filter(cookie => {
+        const purpose = getCookiePurpose(cookie);
+        return purpose === 'authentication' || purpose === 'session';
+      });
+    }
 
     updateCookieList();
     updateStats();

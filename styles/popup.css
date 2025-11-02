@@ -175,6 +175,35 @@ h1 {
   background: #F0F0F0;
 }
 
+/* Crush Options */
+.crush-options {
+  margin-bottom: 0.75rem;
+  padding: 0.5rem;
+  background: #FFF;
+  border: 2px solid #000;
+}
+
+.checkbox-option {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  cursor: pointer;
+  font-size: 0.75rem;
+  font-weight: 700;
+}
+
+.checkbox-option input[type="checkbox"] {
+  width: 16px;
+  height: 16px;
+  cursor: pointer;
+  border: 2px solid #000;
+}
+
+.checkbox-option span {
+  color: #FF4444;
+  user-select: none;
+}
+
 /* Cookie List */
 .cookie-list-section {
   margin-bottom: 1rem;
